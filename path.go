@@ -1,9 +1,10 @@
 // Copyright 2013, 2014 Canonical Ltd.
 // Licensed under the LGPLv3, see LICENCE file for details.
 
-package errors
+package errgo
 
 import (
+	"os"
 	"runtime"
 	"strings"
 )
@@ -22,9 +23,9 @@ func init() {
 	}
 	if ok {
 		// We know that the end of the file should be:
-		// github.com/juju/errors/path.go
+		// github.com/hifx/errgo/path.go
 		size := len(file)
-		suffix := len("github.com/juju/errors/path.go")
+		suffix := len("github.com/hifx/errgo/path.go")
 		goPath = file[:size-suffix]
 		prefixSize = len(goPath)
 	}
@@ -35,4 +36,16 @@ func trimGoPath(filename string) string {
 		return filename[prefixSize:]
 	}
 	return filename
+}
+
+func trimPackage(function string) string {
+	slashIndex := strings.LastIndex(function, string(os.PathSeparator))
+	if slashIndex < 0 {
+		slashIndex = 0
+	}
+	dotIndex := strings.Index(function[slashIndex:], ".")
+	if dotIndex == -1 {
+		return function
+	}
+	return function[slashIndex+dotIndex+1:]
 }

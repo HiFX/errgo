@@ -1,7 +1,7 @@
 // Copyright 2014 Canonical Ltd.
 // Licensed under the LGPLv3, see LICENCE file for details.
 
-package errors_test
+package errgo_test
 
 import (
 	"fmt"
@@ -10,14 +10,14 @@ import (
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/errors"
+	"github.com/hifx/errgo"
 )
 
 type errorsSuite struct{}
 
 var _ = gc.Suite(&errorsSuite{})
 
-var someErr = errors.New("some error") //err varSomeErr
+var errFoo = errgo.New("some error") //err varErrFoo
 
 func (*errorsSuite) TestErrorString(c *gc.C) {
 	for i, test := range []struct {
@@ -28,73 +28,73 @@ func (*errorsSuite) TestErrorString(c *gc.C) {
 		{
 			message: "uncomparable errors",
 			generator: func() error {
-				err := errors.Annotatef(newNonComparableError("uncomparable"), "annotation")
-				return errors.Annotatef(err, "another")
+				err := errgo.Annotatef(newNonComparableError("uncomparable"), "annotation")
+				return errgo.Annotatef(err, "another")
 			},
 			expected: "another: annotation: uncomparable",
 		}, {
 			message: "Errorf",
 			generator: func() error {
-				return errors.Errorf("first error")
+				return errgo.Errorf("first error")
 			},
 			expected: "first error",
 		}, {
 			message: "annotated error",
 			generator: func() error {
-				err := errors.Errorf("first error")
-				return errors.Annotatef(err, "annotation")
+				err := errgo.Errorf("first error")
+				return errgo.Annotatef(err, "annotation")
 			},
 			expected: "annotation: first error",
 		}, {
 			message: "test annotation format",
 			generator: func() error {
-				err := errors.Errorf("first %s", "error")
-				return errors.Annotatef(err, "%s", "annotation")
+				err := errgo.Errorf("first %s", "error")
+				return errgo.Annotatef(err, "%s", "annotation")
 			},
 			expected: "annotation: first error",
 		}, {
 			message: "wrapped error",
 			generator: func() error {
 				err := newError("first error")
-				return errors.Wrap(err, newError("detailed error"))
+				return errgo.Wrap(err, newError("detailed error"))
 			},
 			expected: "detailed error",
 		}, {
 			message: "wrapped annotated error",
 			generator: func() error {
-				err := errors.Errorf("first error")
-				err = errors.Annotatef(err, "annotated")
-				return errors.Wrap(err, fmt.Errorf("detailed error"))
+				err := errgo.Errorf("first error")
+				err = errgo.Annotatef(err, "annotated")
+				return errgo.Wrap(err, fmt.Errorf("detailed error"))
 			},
 			expected: "detailed error",
 		}, {
 			message: "annotated wrapped error",
 			generator: func() error {
-				err := errors.Errorf("first error")
-				err = errors.Wrap(err, fmt.Errorf("detailed error"))
-				return errors.Annotatef(err, "annotated")
+				err := errgo.Errorf("first error")
+				err = errgo.Wrap(err, fmt.Errorf("detailed error"))
+				return errgo.Annotatef(err, "annotated")
 			},
 			expected: "annotated: detailed error",
 		}, {
 			message: "traced, and annotated",
 			generator: func() error {
-				err := errors.New("first error")
-				err = errors.Trace(err)
-				err = errors.Annotate(err, "some context")
-				err = errors.Trace(err)
-				err = errors.Annotate(err, "more context")
-				return errors.Trace(err)
+				err := errgo.New("first error")
+				err = errgo.Trace(err)
+				err = errgo.Annotate(err, "some context")
+				err = errgo.Trace(err)
+				err = errgo.Annotate(err, "more context")
+				return errgo.Trace(err)
 			},
 			expected: "more context: some context: first error",
 		}, {
 			message: "traced, and annotated, masked and annotated",
 			generator: func() error {
-				err := errors.New("first error")
-				err = errors.Trace(err)
-				err = errors.Annotate(err, "some context")
-				err = errors.Maskf(err, "masked")
-				err = errors.Annotate(err, "more context")
-				return errors.Trace(err)
+				err := errgo.New("first error")
+				err = errgo.Trace(err)
+				err = errgo.Annotate(err, "some context")
+				err = errgo.Maskf(err, "masked")
+				err = errgo.Annotate(err, "more context")
+				return errgo.Trace(err)
 			},
 			expected: "more context: masked: some context: first error",
 		},
@@ -109,11 +109,11 @@ func (*errorsSuite) TestErrorString(c *gc.C) {
 }
 
 type embed struct {
-	errors.Err
+	errgo.Err
 }
 
 func newEmbed(format string, args ...interface{}) *embed {
-	err := &embed{errors.NewErr(format, args...)}
+	err := &embed{errgo.NewErr(format, args...)}
 	err.SetLocation(1)
 	return err
 }
@@ -124,12 +124,12 @@ func (*errorsSuite) TestNewErr(c *gc.C) {
 	}
 	err := newEmbed("testing %d", 42) //err embedErr
 	c.Assert(err.Error(), gc.Equals, "testing 42")
-	c.Assert(errors.Cause(err), gc.Equals, err)
-	c.Assert(errors.Details(err), jc.Contains, tagToLocation["embedErr"].String())
+	c.Assert(errgo.Cause(err), gc.Equals, err)
+	c.Assert(errgo.Details(err), jc.Contains, tagToLocation["embedErr"].String())
 }
 
 func newEmbedWithCause(other error, format string, args ...interface{}) *embed {
-	err := &embed{errors.NewErrWithCause(other, format, args...)}
+	err := &embed{errgo.NewErrWithCause(other, format, args...)}
 	err.SetLocation(1)
 	return err
 }
@@ -141,8 +141,8 @@ func (*errorsSuite) TestNewErrWithCause(c *gc.C) {
 	causeErr := fmt.Errorf("external error")
 	err := newEmbedWithCause(causeErr, "testing %d", 43) //err embedCause
 	c.Assert(err.Error(), gc.Equals, "testing 43: external error")
-	c.Assert(errors.Cause(err), gc.Equals, causeErr)
-	c.Assert(errors.Details(err), jc.Contains, tagToLocation["embedCause"].String())
+	c.Assert(errgo.Cause(err), gc.Equals, causeErr)
+	c.Assert(errgo.Details(err), jc.Contains, tagToLocation["embedCause"].String())
 }
 
 var _ error = (*embed)(nil)

@@ -1,12 +1,12 @@
 // Copyright 2013, 2014 Canonical Ltd.
 // Licensed under the LGPLv3, see LICENCE file for details.
 
-package errors_test
+package errgo_test
 
 import (
 	"fmt"
 
-	"github.com/juju/errors"
+	"github.com/hifx/errgo"
 )
 
 func ExampleTrace() {
@@ -14,9 +14,9 @@ func ExampleTrace() {
 	var err2 error = nil
 
 	// Tracing a non nil error will return an error
-	fmt.Println(errors.Trace(err1))
+	fmt.Println(errgo.Trace(err1))
 	// Tracing nil will return nil
-	fmt.Println(errors.Trace(err2))
+	fmt.Println(errgo.Trace(err2))
 
 	// Output: something wicked this way comes
 	// <nil>

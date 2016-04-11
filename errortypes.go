@@ -1,20 +1,46 @@
 // Copyright 2014 Canonical Ltd.
 // Licensed under the LGPLv3, see LICENCE file for details.
 
-package errors
+package errgo
 
 import (
 	"fmt"
+	"net/http"
 )
 
 // wrap is a helper to construct an *wrapper.
-func wrap(err error, format, suffix string, args ...interface{}) Err {
+func wrap(err error, code int, format, suffix string, args ...interface{}) Err {
 	newErr := Err{
 		message:  fmt.Sprintf(format+suffix, args...),
 		previous: err,
 	}
 	newErr.SetLocation(2)
+	newErr.SetCode(code)
 	return newErr
+}
+
+// internalServer represents an error when something unexpected has happened.
+type internalServer struct {
+	Err
+}
+
+// InternalServerf returns an error which satisfies IsInternalServer().
+func InternalServerf(format string, args ...interface{}) error {
+	return &internalServer{wrap(nil, http.StatusInternalServerError, format, "", args...)}
+}
+
+// NewInternalServer returns an error which wraps err that satisfies
+// IsInternalServer().
+func NewInternalServer(err error, msg string) error {
+	return &internalServer{wrap(err, http.StatusInternalServerError, msg, "")}
+}
+
+// IsInternalServer reports whether err was created with InternalServerf() or
+// NewInternalServer().
+func IsInternalServer(err error) bool {
+	err = Cause(err)
+	_, ok := err.(*internalServer)
+	return ok
 }
 
 // notFound represents an error when something has not been found.
@@ -24,13 +50,13 @@ type notFound struct {
 
 // NotFoundf returns an error which satisfies IsNotFound().
 func NotFoundf(format string, args ...interface{}) error {
-	return &notFound{wrap(nil, format, " not found", args...)}
+	return &notFound{wrap(nil, http.StatusNotFound, format, "", args...)}
 }
 
 // NewNotFound returns an error which wraps err that satisfies
 // IsNotFound().
 func NewNotFound(err error, msg string) error {
-	return &notFound{wrap(err, msg, "")}
+	return &notFound{wrap(err, http.StatusNotFound, msg, "")}
 }
 
 // IsNotFound reports whether err was created with NotFoundf() or
@@ -41,30 +67,6 @@ func IsNotFound(err error) bool {
 	return ok
 }
 
-// userNotFound represents an error when an inexistent user is looked up.
-type userNotFound struct {
-	Err
-}
-
-// UserNotFoundf returns an error which satisfies IsUserNotFound().
-func UserNotFoundf(format string, args ...interface{}) error {
-	return &userNotFound{wrap(nil, format, " user not found", args...)}
-}
-
-// NewUserNotFound returns an error which wraps err and satisfies
-// IsUserNotFound().
-func NewUserNotFound(err error, msg string) error {
-	return &userNotFound{wrap(err, msg, "")}
-}
-
-// IsUserNotFound reports whether err was created with UserNotFoundf() or
-// NewUserNotFound().
-func IsUserNotFound(err error) bool {
-	err = Cause(err)
-	_, ok := err.(*userNotFound)
-	return ok
-}
-
 // unauthorized represents an error when an operation is unauthorized.
 type unauthorized struct {
 	Err
@@ -72,13 +74,13 @@ type unauthorized struct {
 
 // Unauthorizedf returns an error which satisfies IsUnauthorized().
 func Unauthorizedf(format string, args ...interface{}) error {
-	return &unauthorized{wrap(nil, format, "", args...)}
+	return &unauthorized{wrap(nil, http.StatusUnauthorized, format, "", args...)}
 }
 
 // NewUnauthorized returns an error which wraps err and satisfies
 // IsUnauthorized().
 func NewUnauthorized(err error, msg string) error {
-	return &unauthorized{wrap(err, msg, "")}
+	return &unauthorized{wrap(err, http.StatusUnauthorized, msg, "")}
 }
 
 // IsUnauthorized reports whether err was created with Unauthorizedf() or
@@ -97,13 +99,13 @@ type notImplemented struct {
 
 // NotImplementedf returns an error which satisfies IsNotImplemented().
 func NotImplementedf(format string, args ...interface{}) error {
-	return &notImplemented{wrap(nil, format, " not implemented", args...)}
+	return &notImplemented{wrap(nil, http.StatusNotImplemented, format, " not implemented", args...)}
 }
 
 // NewNotImplemented returns an error which wraps err and satisfies
 // IsNotImplemented().
 func NewNotImplemented(err error, msg string) error {
-	return &notImplemented{wrap(err, msg, "")}
+	return &notImplemented{wrap(err, http.StatusNotImplemented, msg, "")}
 }
 
 // IsNotImplemented reports whether err was created with
@@ -114,126 +116,6 @@ func IsNotImplemented(err error) bool {
 	return ok
 }
 
-// alreadyExists represents and error when something already exists.
-type alreadyExists struct {
-	Err
-}
-
-// AlreadyExistsf returns an error which satisfies IsAlreadyExists().
-func AlreadyExistsf(format string, args ...interface{}) error {
-	return &alreadyExists{wrap(nil, format, " already exists", args...)}
-}
-
-// NewAlreadyExists returns an error which wraps err and satisfies
-// IsAlreadyExists().
-func NewAlreadyExists(err error, msg string) error {
-	return &alreadyExists{wrap(err, msg, "")}
-}
-
-// IsAlreadyExists reports whether the error was created with
-// AlreadyExistsf() or NewAlreadyExists().
-func IsAlreadyExists(err error) bool {
-	err = Cause(err)
-	_, ok := err.(*alreadyExists)
-	return ok
-}
-
-// notSupported represents an error when something is not supported.
-type notSupported struct {
-	Err
-}
-
-// NotSupportedf returns an error which satisfies IsNotSupported().
-func NotSupportedf(format string, args ...interface{}) error {
-	return &notSupported{wrap(nil, format, " not supported", args...)}
-}
-
-// NewNotSupported returns an error which wraps err and satisfies
-// IsNotSupported().
-func NewNotSupported(err error, msg string) error {
-	return &notSupported{wrap(err, msg, "")}
-}
-
-// IsNotSupported reports whether the error was created with
-// NotSupportedf() or NewNotSupported().
-func IsNotSupported(err error) bool {
-	err = Cause(err)
-	_, ok := err.(*notSupported)
-	return ok
-}
-
-// notValid represents an error when something is not valid.
-type notValid struct {
-	Err
-}
-
-// NotValidf returns an error which satisfies IsNotValid().
-func NotValidf(format string, args ...interface{}) error {
-	return &notValid{wrap(nil, format, " not valid", args...)}
-}
-
-// NewNotValid returns an error which wraps err and satisfies IsNotValid().
-func NewNotValid(err error, msg string) error {
-	return &notValid{wrap(err, msg, "")}
-}
-
-// IsNotValid reports whether the error was created with NotValidf() or
-// NewNotValid().
-func IsNotValid(err error) bool {
-	err = Cause(err)
-	_, ok := err.(*notValid)
-	return ok
-}
-
-// notProvisioned represents an error when something is not yet provisioned.
-type notProvisioned struct {
-	Err
-}
-
-// NotProvisionedf returns an error which satisfies IsNotProvisioned().
-func NotProvisionedf(format string, args ...interface{}) error {
-	return &notProvisioned{wrap(nil, format, " not provisioned", args...)}
-}
-
-// NewNotProvisioned returns an error which wraps err that satisfies
-// IsNotProvisioned().
-func NewNotProvisioned(err error, msg string) error {
-	return &notProvisioned{wrap(err, msg, "")}
-}
-
-// IsNotProvisioned reports whether err was created with NotProvisionedf() or
-// NewNotProvisioned().
-func IsNotProvisioned(err error) bool {
-	err = Cause(err)
-	_, ok := err.(*notProvisioned)
-	return ok
-}
-
-// notAssigned represents an error when something is not yet assigned to
-// something else.
-type notAssigned struct {
-	Err
-}
-
-// NotAssignedf returns an error which satisfies IsNotAssigned().
-func NotAssignedf(format string, args ...interface{}) error {
-	return &notAssigned{wrap(nil, format, " not assigned", args...)}
-}
-
-// NewNotAssigned returns an error which wraps err that satisfies
-// IsNotAssigned().
-func NewNotAssigned(err error, msg string) error {
-	return &notAssigned{wrap(err, msg, "")}
-}
-
-// IsNotAssigned reports whether err was created with NotAssignedf() or
-// NewNotAssigned().
-func IsNotAssigned(err error) bool {
-	err = Cause(err)
-	_, ok := err.(*notAssigned)
-	return ok
-}
-
 // badRequest represents an error when a request has bad parameters.
 type badRequest struct {
 	Err
@@ -241,13 +123,13 @@ type badRequest struct {
 
 // BadRequestf returns an error which satisfies IsBadRequest().
 func BadRequestf(format string, args ...interface{}) error {
-	return &badRequest{wrap(nil, format, "", args...)}
+	return &badRequest{wrap(nil, http.StatusBadRequest, format, "", args...)}
 }
 
 // NewBadRequest returns an error which wraps err that satisfies
 // IsBadRequest().
 func NewBadRequest(err error, msg string) error {
-	return &badRequest{wrap(err, msg, "")}
+	return &badRequest{wrap(err, http.StatusBadRequest, msg, "")}
 }
 
 // IsBadRequest reports whether err was created with BadRequestf() or
@@ -266,13 +148,13 @@ type methodNotAllowed struct {
 
 // MethodNotAllowedf returns an error which satisfies IsMethodNotAllowed().
 func MethodNotAllowedf(format string, args ...interface{}) error {
-	return &methodNotAllowed{wrap(nil, format, "", args...)}
+	return &methodNotAllowed{wrap(nil, http.StatusMethodNotAllowed, format, "", args...)}
 }
 
 // NewMethodNotAllowed returns an error which wraps err that satisfies
 // IsMethodNotAllowed().
 func NewMethodNotAllowed(err error, msg string) error {
-	return &methodNotAllowed{wrap(err, msg, "")}
+	return &methodNotAllowed{wrap(err, http.StatusMethodNotAllowed, msg, "")}
 }
 
 // IsMethodNotAllowed reports whether err was created with MethodNotAllowedf() or

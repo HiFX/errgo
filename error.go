@@ -1,7 +1,7 @@
 // Copyright 2014 Canonical Ltd.
 // Licensed under the LGPLv3, see LICENCE file for details.
 
-package errors
+package errgo
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 // where the error was created.
 //
 // It may be embedded in custom error types to add extra information that
-// this errors package can understand.
+// this errgo package can understand.
 type Err struct {
 	// message holds an annotation of the error.
 	message string
@@ -25,10 +25,14 @@ type Err struct {
 	// previous holds the previous error in the error stack, if any.
 	previous error
 
-	// file and line hold the source code location where the error was
+	// file, line and function hold the source code location where the error was
 	// created.
-	file string
-	line int
+	file     string
+	line     int
+	function string
+
+	// the http response code to be sent for the error.
+	code int
 }
 
 // NewErr is used to return an Err for the purpose of embedding in other
@@ -37,12 +41,12 @@ type Err struct {
 //
 // For example:
 //     type FooError struct {
-//         errors.Err
+//         errgo.Err
 //         code int
 //     }
 //
 //     func NewFooError(code int) error {
-//         err := &FooError{errors.NewErr("foo"), code}
+//         err := &FooError{errgo.NewErr("foo"), code}
 //         err.SetLocation(1)
 //         return err
 //     }
@@ -58,12 +62,12 @@ func NewErr(format string, args ...interface{}) Err {
 //
 // For example:
 //     type FooError struct {
-//         errors.Err
+//         errgo.Err
 //         code int
 //     }
 //
 //     func (e *FooError) Annotate(format string, args ...interface{}) error {
-//         err := &FooError{errors.NewErrWithCause(e.Err, format, args...), e.code}
+//         err := &FooError{errgo.NewErrWithCause(e.Err, format, args...), e.code}
 //         err.SetLocation(1)
 //         return err
 //     })
@@ -77,8 +81,18 @@ func NewErrWithCause(other error, format string, args ...interface{}) Err {
 
 // Location is the file and line of where the error was most recently
 // created or annotated.
-func (e *Err) Location() (filename string, line int) {
-	return e.file, e.line
+func (e *Err) Location() (filename, function string, line int) {
+	return e.file, e.function, e.line
+}
+
+// Code returns the HTTP response code to be sent for this error.
+func (e *Err) Code() int {
+	return e.code
+}
+
+// SetCode sets the HTTP response code to be sent for this error.
+func (e *Err) SetCode(code int) {
+	e.code = code
 }
 
 // Underlying returns the previous error in the error stack, if any. A client
@@ -90,7 +104,7 @@ func (e *Err) Underlying() error {
 	return e.previous
 }
 
-// The Cause of an error is the most recent error in the error stack that
+// Cause of an error is the most recent error in the error stack that
 // meets one of these criteria: the original error that was raised; the new
 // error that was passed into the Wrap function; the most recently masked
 // error; or nil if the error itself is considered the Cause.  Normally this
@@ -127,13 +141,14 @@ func (e *Err) Error() string {
 // SetLocation records the source location of the error at callDepth stack
 // frames above the call.
 func (e *Err) SetLocation(callDepth int) {
-	_, file, line, _ := runtime.Caller(callDepth + 1)
+	pc, file, line, _ := runtime.Caller(callDepth + 1)
+	e.function = runtime.FuncForPC(pc).Name()
 	e.file = trimGoPath(file)
 	e.line = line
 }
 
 // StackTrace returns one string for each location recorded in the stack of
-// errors. The first value is the originating error, with a line for each
+// errgo. The first value is the originating error, with a line for each
 // other annotation or tracing of the error.
 func (e *Err) StackTrace() []string {
 	return errorStack(e)

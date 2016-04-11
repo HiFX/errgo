@@ -1,7 +1,7 @@
 // Copyright 2013, 2014 Canonical Ltd.
 // Licensed under the LGPLv3, see LICENCE file for details.
 
-package errors_test
+package errgo_test
 
 import (
 	stderrors "errors"
@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"runtime"
 
-	"github.com/juju/errors"
+	"github.com/hifx/errgo"
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 )
@@ -27,17 +27,17 @@ type errorInfo struct {
 // allErrors holds information for all defined errors. When adding new
 // errors, add them here as well to include them in tests.
 var allErrors = []*errorInfo{
-	&errorInfo{errors.IsNotFound, errors.NotFoundf, errors.NewNotFound, " not found"},
-	&errorInfo{errors.IsUserNotFound, errors.UserNotFoundf, errors.NewUserNotFound, " user not found"},
-	&errorInfo{errors.IsUnauthorized, errors.Unauthorizedf, errors.NewUnauthorized, ""},
-	&errorInfo{errors.IsNotImplemented, errors.NotImplementedf, errors.NewNotImplemented, " not implemented"},
-	&errorInfo{errors.IsAlreadyExists, errors.AlreadyExistsf, errors.NewAlreadyExists, " already exists"},
-	&errorInfo{errors.IsNotSupported, errors.NotSupportedf, errors.NewNotSupported, " not supported"},
-	&errorInfo{errors.IsNotValid, errors.NotValidf, errors.NewNotValid, " not valid"},
-	&errorInfo{errors.IsNotProvisioned, errors.NotProvisionedf, errors.NewNotProvisioned, " not provisioned"},
-	&errorInfo{errors.IsNotAssigned, errors.NotAssignedf, errors.NewNotAssigned, " not assigned"},
-	&errorInfo{errors.IsMethodNotAllowed, errors.MethodNotAllowedf, errors.NewMethodNotAllowed, ""},
-	&errorInfo{errors.IsBadRequest, errors.BadRequestf, errors.NewBadRequest, ""},
+	&errorInfo{errgo.IsNotFound, errgo.NotFoundf, errgo.NewNotFound, " not found"},
+	&errorInfo{errgo.IsUserNotFound, errgo.UserNotFoundf, errgo.NewUserNotFound, " user not found"},
+	&errorInfo{errgo.IsUnauthorized, errgo.Unauthorizedf, errgo.NewUnauthorized, ""},
+	&errorInfo{errgo.IsNotImplemented, errgo.NotImplementedf, errgo.NewNotImplemented, " not implemented"},
+	&errorInfo{errgo.IsAlreadyExists, errgo.AlreadyExistsf, errgo.NewAlreadyExists, " already exists"},
+	&errorInfo{errgo.IsNotSupported, errgo.NotSupportedf, errgo.NewNotSupported, " not supported"},
+	&errorInfo{errgo.IsNotValid, errgo.NotValidf, errgo.NewNotValid, " not valid"},
+	&errorInfo{errgo.IsNotProvisioned, errgo.NotProvisionedf, errgo.NewNotProvisioned, " not provisioned"},
+	&errorInfo{errgo.IsNotAssigned, errgo.NotAssignedf, errgo.NewNotAssigned, " not assigned"},
+	&errorInfo{errgo.IsMethodNotAllowed, errgo.MethodNotAllowedf, errgo.NewMethodNotAllowed, ""},
+	&errorInfo{errgo.IsBadRequest, errgo.BadRequestf, errgo.NewBadRequest, ""},
 }
 
 type errorTypeSuite struct{}
@@ -64,7 +64,7 @@ type errorTest struct {
 }
 
 func deferredAnnotatef(err error, format string, args ...interface{}) error {
-	errors.DeferredAnnotatef(&err, format, args...)
+	errgo.DeferredAnnotatef(&err, format, args...)
 	return err
 }
 

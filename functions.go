@@ -1,7 +1,7 @@
 // Copyright 2014 Canonical Ltd.
 // Licensed under the LGPLv3, see LICENCE file for details.
 
-package errors
+package errgo
 
 import (
 	"fmt"
@@ -212,7 +212,7 @@ type wrapper interface {
 }
 
 type locationer interface {
-	Location() (string, int)
+	Location() (string, string, int)
 }
 
 var (
@@ -236,9 +236,9 @@ func Details(err error) string {
 	for {
 		s = append(s, '{')
 		if err, ok := err.(locationer); ok {
-			file, line := err.Location()
+			file, function, line := err.Location()
 			if file != "" {
-				s = append(s, fmt.Sprintf("%s:%d", file, line)...)
+				s = append(s, fmt.Sprintf("%s:%d %s", file, line, function)...)
 				s = append(s, ": "...)
 			}
 		}
@@ -268,11 +268,11 @@ func Details(err error) string {
 // from the call stack is used in the output.
 //
 //     first error
-//     github.com/juju/errors/annotation_test.go:193:
-//     github.com/juju/errors/annotation_test.go:194: annotation
-//     github.com/juju/errors/annotation_test.go:195:
-//     github.com/juju/errors/annotation_test.go:196: more context
-//     github.com/juju/errors/annotation_test.go:197:
+//     github.com/hifx/errgo/annotation_test.go:193:
+//     github.com/hifx/errgo/annotation_test.go:194: annotation
+//     github.com/hifx/errgo/annotation_test.go:195:
+//     github.com/hifx/errgo/annotation_test.go:196: more context
+//     github.com/hifx/errgo/annotation_test.go:197:
 func ErrorStack(err error) string {
 	return strings.Join(errorStack(err), "\n")
 }
@@ -287,11 +287,12 @@ func errorStack(err error) []string {
 	for {
 		var buff []byte
 		if err, ok := err.(locationer); ok {
-			file, line := err.Location()
+			file, function, line := err.Location()
 			// Strip off the leading GOPATH/src path elements.
 			file = trimGoPath(file)
+			function = trimPackage(function)
 			if file != "" {
-				buff = append(buff, fmt.Sprintf("%s:%d", file, line)...)
+				buff = append(buff, fmt.Sprintf("%s:%d %s", file, line, function)...)
 				buff = append(buff, ": "...)
 			}
 		}
