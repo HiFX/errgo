@@ -69,15 +69,16 @@ func (*functionSuite) TestDeferredAnnotatef(c *gc.C) {
 	if runtime.Compiler == "gccgo" {
 		c.Skip("gccgo can't determine the location")
 	}
-	first := errgo.New("first")
+	first := errgo.New("first") //err deferredAnnotate-1
 	test := func() (err error) {
 		defer errgo.DeferredAnnotatef(&err, "deferred %s", "annotate")
-		return first
-	} //err deferredAnnotate
+		return first //err deferredAnnotate-2
+	}
 	err := test()
 	c.Assert(err.Error(), gc.Equals, "deferred annotate: first")
 	c.Assert(errgo.Cause(err), gc.Equals, first)
-	c.Assert(errgo.Details(err), jc.Contains, tagToLocation["deferredAnnotate"].String())
+	c.Assert(errgo.Details(err), jc.Contains, tagToLocation["deferredAnnotate-1"].String())
+	c.Assert(errgo.Details(err), jc.Contains, tagToLocation["deferredAnnotate-2"].String())
 
 	err = nil
 	errgo.DeferredAnnotatef(&err, "deferred %s", "annotate")
@@ -172,18 +173,18 @@ func (s *functionSuite) TestDetails(c *gc.C) {
 	if runtime.Compiler == "gccgo" {
 		c.Skip("gccgo can't determine the location")
 	}
-	c.Assert(errgo.Details(nil), gc.Equals, "[]")
+	c.Assert(errgo.ErrorStack(nil), gc.Equals, "")
 
 	otherErr := fmt.Errorf("other")
 	checkDetails(c, otherErr, "[{other}]")
 
-	err0 := newEmbed("foo") //err TestStack#0
+	err0 := newEmbed("foo") //err TestStack#0 github.com/hifx/errgo_test.(*functionSuite).TestDetails
 	checkDetails(c, err0, "[{$TestStack#0$: foo}]")
 
-	err1 := errgo.Annotate(err0, "bar") //err TestStack#1
+	err1 := errgo.Annotate(err0, "bar") //err TestStack#1 github.com/hifx/errgo_test.(*functionSuite).TestDetails
 	checkDetails(c, err1, "[{$TestStack#1$: bar} {$TestStack#0$: foo}]")
 
-	err2 := errgo.Trace(err1) //err TestStack#2
+	err2 := errgo.Trace(err1) //err TestStack#2 github.com/hifx/errgo_test.(*functionSuite).TestDetails
 	checkDetails(c, err2, "[{$TestStack#2$: } {$TestStack#1$: bar} {$TestStack#0$: foo}]")
 }
 
@@ -212,15 +213,15 @@ func (*functionSuite) TestErrorStack(c *gc.C) {
 		}, {
 			message: "single error stack",
 			generator: func() error {
-				return errgo.New("first error") //err single
+				return errgo.New("first error") //err single (*functionSuite).TestErrorStack.func3
 			},
 			expected: "$single$: first error",
 			tracer:   true,
 		}, {
 			message: "annotated error",
 			generator: func() error {
-				err := errgo.New("first error")          //err annotated-0
-				return errgo.Annotate(err, "annotation") //err annotated-1
+				err := errgo.New("first error")          //err annotated-0 (*functionSuite).TestErrorStack.func4
+				return errgo.Annotate(err, "annotation") //err annotated-1 (*functionSuite).TestErrorStack.func4
 			},
 			expected: "" +
 				"$annotated-0$: first error\n" +
@@ -229,8 +230,8 @@ func (*functionSuite) TestErrorStack(c *gc.C) {
 		}, {
 			message: "wrapped error",
 			generator: func() error {
-				err := errgo.New("first error")                    //err wrapped-0
-				return errgo.Wrap(err, newError("detailed error")) //err wrapped-1
+				err := errgo.New("first error")                    //err wrapped-0 (*functionSuite).TestErrorStack.func5
+				return errgo.Wrap(err, newError("detailed error")) //err wrapped-1 (*functionSuite).TestErrorStack.func5
 			},
 			expected: "" +
 				"$wrapped-0$: first error\n" +
@@ -239,9 +240,9 @@ func (*functionSuite) TestErrorStack(c *gc.C) {
 		}, {
 			message: "annotated wrapped error",
 			generator: func() error {
-				err := errgo.Errorf("first error")                  //err ann-wrap-0
-				err = errgo.Wrap(err, fmt.Errorf("detailed error")) //err ann-wrap-1
-				return errgo.Annotatef(err, "annotated")            //err ann-wrap-2
+				err := errgo.Errorf("first error")                  //err ann-wrap-0 (*functionSuite).TestErrorStack.func6
+				err = errgo.Wrap(err, fmt.Errorf("detailed error")) //err ann-wrap-1 (*functionSuite).TestErrorStack.func6
+				return errgo.Annotatef(err, "annotated")            //err ann-wrap-2 (*functionSuite).TestErrorStack.func6
 			},
 			expected: "" +
 				"$ann-wrap-0$: first error\n" +
@@ -251,12 +252,12 @@ func (*functionSuite) TestErrorStack(c *gc.C) {
 		}, {
 			message: "traced, and annotated",
 			generator: func() error {
-				err := errgo.New("first error")           //err stack-0
-				err = errgo.Trace(err)                    //err stack-1
-				err = errgo.Annotate(err, "some context") //err stack-2
-				err = errgo.Trace(err)                    //err stack-3
-				err = errgo.Annotate(err, "more context") //err stack-4
-				return errgo.Trace(err)                   //err stack-5
+				err := errgo.New("first error")           //err stack-0 (*functionSuite).TestErrorStack.func7
+				err = errgo.Trace(err)                    //err stack-1 (*functionSuite).TestErrorStack.func7
+				err = errgo.Annotate(err, "some context") //err stack-2 (*functionSuite).TestErrorStack.func7
+				err = errgo.Trace(err)                    //err stack-3 (*functionSuite).TestErrorStack.func7
+				err = errgo.Annotate(err, "more context") //err stack-4 (*functionSuite).TestErrorStack.func7
+				return errgo.Trace(err)                   //err stack-5 (*functionSuite).TestErrorStack.func7
 			},
 			expected: "" +
 				"$stack-0$: first error\n" +
@@ -270,11 +271,11 @@ func (*functionSuite) TestErrorStack(c *gc.C) {
 			message: "uncomparable, wrapped with a value error",
 			generator: func() error {
 				err := newNonComparableError("first error")    //err mixed-0
-				err = errgo.Trace(err)                         //err mixed-1
-				err = errgo.Wrap(err, newError("value error")) //err mixed-2
-				err = errgo.Maskf(err, "masked")               //err mixed-3
-				err = errgo.Annotate(err, "more context")      //err mixed-4
-				return errgo.Trace(err)                        //err mixed-5
+				err = errgo.Trace(err)                         //err mixed-1 (*functionSuite).TestErrorStack.func8
+				err = errgo.Wrap(err, newError("value error")) //err mixed-2 (*functionSuite).TestErrorStack.func8
+				err = errgo.Maskf(err, "masked")               //err mixed-3 (*functionSuite).TestErrorStack.func8
+				err = errgo.Annotate(err, "more context")      //err mixed-4 (*functionSuite).TestErrorStack.func8
+				return errgo.Trace(err)                        //err mixed-5 (*functionSuite).TestErrorStack.func8
 			},
 			expected: "" +
 				"first error\n" +

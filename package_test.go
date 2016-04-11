@@ -61,12 +61,13 @@ func location(tag string) Location {
 }
 
 type Location struct {
-	file string
-	line int
+	file     string
+	line     int
+	function string
 }
 
 func (loc Location) String() string {
-	return fmt.Sprintf("%s:%d", loc.file, loc.line)
+	return fmt.Sprintf("%s:%d%s", loc.file, loc.line, loc.function)
 }
 
 var tagToLocation = make(map[string]Location)
@@ -76,15 +77,21 @@ func setLocationsForErrorTags(filename string) {
 	if err != nil {
 		panic(err)
 	}
-	filename = "github.com/juju/errgo/" + filename
+	filename = "github.com/hifx/errgo/" + filename
 	lines := strings.Split(string(data), "\n")
 	for i, line := range lines {
 		if j := strings.Index(line, "//err "); j >= 0 {
 			tag := line[j+len("//err "):]
+			tags := strings.Split(tag, " ")
+			tag = tags[0]
 			if _, found := tagToLocation[tag]; found {
 				panic(fmt.Sprintf("tag %q already processed previously", tag))
 			}
-			tagToLocation[tag] = Location{file: filename, line: i + 1}
+			l := Location{file: filename, line: i + 1}
+			if len(tags) > 1 {
+				l.function = " " + tags[1]
+			}
+			tagToLocation[tag] = l
 		}
 	}
 }

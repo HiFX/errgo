@@ -99,7 +99,7 @@ type notImplemented struct {
 
 // NotImplementedf returns an error which satisfies IsNotImplemented().
 func NotImplementedf(format string, args ...interface{}) error {
-	return &notImplemented{wrap(nil, http.StatusNotImplemented, format, " not implemented", args...)}
+	return &notImplemented{wrap(nil, http.StatusNotImplemented, format, "", args...)}
 }
 
 // NewNotImplemented returns an error which wraps err and satisfies

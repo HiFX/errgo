@@ -27,17 +27,13 @@ type errorInfo struct {
 // allErrors holds information for all defined errors. When adding new
 // errors, add them here as well to include them in tests.
 var allErrors = []*errorInfo{
-	&errorInfo{errgo.IsNotFound, errgo.NotFoundf, errgo.NewNotFound, " not found"},
-	&errorInfo{errgo.IsUserNotFound, errgo.UserNotFoundf, errgo.NewUserNotFound, " user not found"},
-	&errorInfo{errgo.IsUnauthorized, errgo.Unauthorizedf, errgo.NewUnauthorized, ""},
-	&errorInfo{errgo.IsNotImplemented, errgo.NotImplementedf, errgo.NewNotImplemented, " not implemented"},
-	&errorInfo{errgo.IsAlreadyExists, errgo.AlreadyExistsf, errgo.NewAlreadyExists, " already exists"},
-	&errorInfo{errgo.IsNotSupported, errgo.NotSupportedf, errgo.NewNotSupported, " not supported"},
-	&errorInfo{errgo.IsNotValid, errgo.NotValidf, errgo.NewNotValid, " not valid"},
-	&errorInfo{errgo.IsNotProvisioned, errgo.NotProvisionedf, errgo.NewNotProvisioned, " not provisioned"},
-	&errorInfo{errgo.IsNotAssigned, errgo.NotAssignedf, errgo.NewNotAssigned, " not assigned"},
-	&errorInfo{errgo.IsMethodNotAllowed, errgo.MethodNotAllowedf, errgo.NewMethodNotAllowed, ""},
 	&errorInfo{errgo.IsBadRequest, errgo.BadRequestf, errgo.NewBadRequest, ""},
+	&errorInfo{errgo.IsInternalServer, errgo.InternalServerf, errgo.NewInternalServer, ""},
+	&errorInfo{errgo.IsNotFound, errgo.NotFoundf, errgo.NewNotFound, ""},
+	&errorInfo{errgo.IsUnauthorized, errgo.Unauthorizedf, errgo.NewUnauthorized, ""},
+	&errorInfo{errgo.IsNotImplemented, errgo.NotImplementedf, errgo.NewNotImplemented, ""},
+	&errorInfo{errgo.IsBadRequest, errgo.BadRequestf, errgo.NewBadRequest, ""},
+	&errorInfo{errgo.IsMethodNotAllowed, errgo.MethodNotAllowedf, errgo.NewMethodNotAllowed, ""},
 }
 
 type errorTypeSuite struct{}
