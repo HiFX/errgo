@@ -113,7 +113,7 @@ type embed struct {
 }
 
 func newEmbed(format string, args ...interface{}) *embed {
-	err := &embed{errgo.NewErr(format, args...)}
+	err := &embed{errgo.NewErr(0, format, args...)}
 	err.SetLocation(1)
 	return err
 }
@@ -129,7 +129,7 @@ func (*errorsSuite) TestNewErr(c *gc.C) {
 }
 
 func newEmbedWithCause(other error, format string, args ...interface{}) *embed {
-	err := &embed{errgo.NewErrWithCause(other, format, args...)}
+	err := &embed{errgo.NewErrWithCause(other, 0, format, args...)}
 	err.SetLocation(1)
 	return err
 }

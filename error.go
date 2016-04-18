@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
+	"strings"
 )
 
 // Err holds a description of an error along with information about
@@ -33,6 +34,9 @@ type Err struct {
 
 	// the http response code to be sent for the error.
 	code int
+
+	// the stack trace for the error
+	stack string
 }
 
 // NewErr is used to return an Err for the purpose of embedding in other
@@ -50,10 +54,19 @@ type Err struct {
 //         err.SetLocation(1)
 //         return err
 //     }
-func NewErr(format string, args ...interface{}) Err {
-	return Err{
+func NewErr(code int, format string, args ...interface{}) Err {
+	err := Err{
 		message: fmt.Sprintf(format, args...),
+		code:    code,
 	}
+	err.SetLocation(1)
+	err.stack = strings.Join(err.StackTrace(), ";")
+	return err
+}
+
+//Stack returns the error stack
+func (e Err) Stack() string {
+	return ErrorStack(&e)
 }
 
 // NewErrWithCause is used to return an Err with case by other error for the purpose of embedding in other
@@ -71,12 +84,16 @@ func NewErr(format string, args ...interface{}) Err {
 //         err.SetLocation(1)
 //         return err
 //     })
-func NewErrWithCause(other error, format string, args ...interface{}) Err {
-	return Err{
+func NewErrWithCause(other error, code int, format string, args ...interface{}) Err {
+	err := Err{
 		message:  fmt.Sprintf(format, args...),
 		cause:    Cause(other),
 		previous: other,
+		code:     code,
 	}
+	err.SetLocation(1)
+	err.stack = strings.Join(err.StackTrace(), ";")
+	return err
 }
 
 // Location is the file and line of where the error was most recently
