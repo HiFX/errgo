@@ -15,6 +15,7 @@ import (
 //
 // It may be embedded in custom error types to add extra information that
 // this errgo package can understand.
+//swagger:response Err
 type Err struct {
 	// message holds an annotation of the error.
 	message string
