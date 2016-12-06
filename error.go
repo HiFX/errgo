@@ -36,6 +36,9 @@ type Err struct {
 	// the http response code to be sent for the error.
 	code int
 
+	// http content type of the error
+	contentType string
+
 	// the stack trace for the error
 	stack string
 }
@@ -57,8 +60,9 @@ type Err struct {
 //     }
 func NewErr(code int, format string, args ...interface{}) Err {
 	err := Err{
-		message: fmt.Sprintf(format, args...),
-		code:    code,
+		message:     fmt.Sprintf(format, args...),
+		code:        code,
+		contentType: "text/plain; charset=utf-8",
 	}
 	err.SetLocation(1)
 	err.stack = strings.Join(err.StackTrace(), ";")
@@ -87,10 +91,25 @@ func (e Err) Stack() string {
 //     })
 func NewErrWithCause(other error, code int, format string, args ...interface{}) Err {
 	err := Err{
-		message:  fmt.Sprintf(format, args...),
-		cause:    Cause(other),
-		previous: other,
-		code:     code,
+		message:     fmt.Sprintf(format, args...),
+		cause:       Cause(other),
+		previous:    other,
+		code:        code,
+		contentType: "text/plain; charset=utf-8",
+	}
+	err.SetLocation(1)
+	err.stack = strings.Join(err.StackTrace(), ";")
+	return err
+}
+
+// NewJSONErrWithCause is same as NewErrWithCause except the content type set to application/json
+func NewJSONErrWithCause(other error, code int, message string) Err {
+	err := Err{
+		message:     message,
+		cause:       Cause(other),
+		previous:    other,
+		code:        code,
+		contentType: "application/json; charset=utf-8",
 	}
 	err.SetLocation(1)
 	err.stack = strings.Join(err.StackTrace(), ";")
@@ -106,6 +125,11 @@ func (e *Err) Location() (filename, function string, line int) {
 // Code returns the HTTP response code to be sent for this error.
 func (e *Err) Code() int {
 	return e.code
+}
+
+// ContentType returns the HTTP content type of the error.
+func (e *Err) ContentType() string {
+	return e.contentType
 }
 
 // SetCode sets the HTTP response code to be sent for this error.
